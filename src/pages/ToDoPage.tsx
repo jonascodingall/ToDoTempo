@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useQuery } from "react-query";
+// TodoPage.tsx
+import React, { useState, useEffect } from 'react';
+import { useQuery } from 'react-query';
 import TaskModel from '../models/TaskModel';
-import TaskComponent from "../components/TaskComponent";
+import TaskComponent from '../components/TaskComponent';
 import './ToDoPage.css';
 
-function TodoPage(){
-    const tasksStorageKey = "tasks";
+const TodoPage: React.FC = () => {
+    const tasksStorageKey = 'tasks';
 
-    // Funktion zum Abrufen von Daten aus dem Local Storage
     const getDataFromLocalStorage = () => {
         const localData = localStorage.getItem(tasksStorageKey);
         return localData ? JSON.parse(localData) : null;
-    }
+    };
 
     const { data: tasksFromLocalStorage, isLoading: loadingLocalStorage } = useQuery({
         queryFn: getDataFromLocalStorage,
@@ -20,7 +20,7 @@ function TodoPage(){
     });
 
     const { data: tasksFromAPI, isLoading: loadingAPI } = useQuery({
-        queryFn: () => fetch("https://jsonplaceholder.typicode.com/todos").then(res => res.json()),
+        queryFn: () => fetch('https://jsonplaceholder.typicode.com/todos').then(res => res.json()),
         retry: false,
     });
 
@@ -37,19 +37,30 @@ function TodoPage(){
         }
     }, [tasksFromLocalStorage, tasksFromAPI]);
 
-    return(
+    const updateTask = (id: number, completed: boolean, newTitle: string) => {
+        const updatedTasks = taskData.map(task => {
+            if (task.id === id) {
+                return { ...task, title: newTitle, completed: completed };
+            }
+            return task;
+        });
+        setTaskData(updatedTasks);
+        localStorage.setItem(tasksStorageKey, JSON.stringify(updatedTasks));
+    };
+
+    return (
         <>
             {isLoading ? (
                 <div>Loading...</div>
             ) : (
-                <ul>
-                    {taskData.map((task: TaskModel) =>
-                        <TaskComponent key={task.id} taskModel={task}/>
-                    )}
+                <ul className="task-list">
+                    {taskData.map((task: TaskModel) => (
+                        <TaskComponent key={task.id} taskModel={task} isEditing={false} updateTask={updateTask} />
+                    ))}
                 </ul>
             )}
         </>
-    )
-}
+    );
+};
 
 export default TodoPage;
